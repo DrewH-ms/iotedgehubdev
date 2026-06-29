@@ -4,6 +4,7 @@
 
 import json
 import os
+import posixpath
 import shutil
 
 import pytest
@@ -302,7 +303,7 @@ def test_bind(source, target, mode):
     volume = {
         'source': source,
         'target': target,
-        'type': 'bind' if source is not None and os.path.isabs(source) else 'volume'
+        'type': 'bind' if source is not None and (os.path.isabs(source) or posixpath.isabs(source)) else 'volume'
     }
 
     if mode == 'ro':
