@@ -1,0 +1,67 @@
+# Test-only pipeline for validating the Python 3.14 upgrade of iotedgehubdev.
+#
+# This is a TRIMMED version of vsts_ci/azure-pipelines.yml that keeps ONLY the
+# test jobs (tox -e py314). The publish/sign/upload jobs and the 1ES self-hosted
+# pools, ESRP signing, and azuresdkpartnerdrops service connection from the full
+# pipeline are intentionally removed because they require Microsoft-internal
+# resources that do not exist in a personal/standalone Azure DevOps org.
+#
+# It must live in vsts_ci/ so the `- template: <os>/...` paths resolve.
+#
+# Required pipeline variables (Pipeline -> Edit -> Variables, mark secrets as secret):
+#   IOTHUB_CONNECTION_STRING        HostName=<hub>.azure-devices.net;SharedAccessKeyName=iothubowner;SharedAccessKey=...
+#   LINUX_DEVICE_CONNECTION_STRING  HostName=<hub>.azure-devices.net;DeviceId=<edge-device>;SharedAccessKey=...
+#   WINDOWS_DEVICE_CONNECTION_STRING  (same value as LINUX_, only needed if you keep the Windows job)
+#   DARWIN_DEVICE_CONNECTION_STRING   (same value, only needed if you keep the macOS job)
+#   CONTAINER_REGISTRY_SERVER       <registry>.azurecr.io
+#   CONTAINER_REGISTRY_USERNAME     <acr-username>
+#   CONTAINER_REGISTRY_PASSWORD     <acr-password>   (secret)
+#   TEST_CA_KEY_PASSPHASE           any non-empty string (secret)
+#
+# NOTE: to get the ~12 device-auth integration tests GREEN, the hub must be
+# SAS-enabled (disableLocalAuth=false) with a real edge device. Against a
+# disableLocalAuth=true hub expect ~179 pass / ~12 fail (401002).
+#
+# NOTE: the simulator/compose tests need a LINUX Docker daemon. Microsoft-hosted
+# ubuntu agents provide this. macOS-hosted agents have NO Docker daemon and the
+# Windows-hosted agent runs Windows containers, so the Linux job is the
+# authoritative one for the container/simulator tests.
+
+trigger: none      # run manually from the Azure DevOps website
+
+jobs:
+  - job: Linux
+    pool:
+      vmImage: ubuntu-22.04
+    strategy:
+      matrix:
+        Python314:
+          python.version: "3.14"
+          TOXENV: "py314"
+      maxParallel: 1
+    steps:
+      - template: linux/continuous-build-linux.yml
+
+  - job: Windows
+    pool:
+      vmImage: windows-2022
+    strategy:
+      matrix:
+        Python314:
+          python.version: "3.14"
+          TOXENV: "py314"
+      maxParallel: 1
+    steps:
+      - template: win32/continuous-build-win32.yml
+
+  - job: MacOS
+    pool:
+      vmImage: macOS-latest
+    strategy:
+      matrix:
+        Python314:
+          python.version: "3.14"
+          TOXENV: "py314"
+      maxParallel: 1
+    steps:
+      - template: darwin/continuous-build-darwin.yml
