@@ -376,18 +376,20 @@ def test_join_create_options():
         "createOptions01": ": {'PortBindings': {'43/udp': [{'HostPort': '4",
         "createOptions02": "3'}], '42/tcp': [{'HostPort': '42'}]}}}"
     }''')
-    assert ComposeProject._join_create_options(valid_settings) == """{'Env': ['k1=v1', 'k2=v2', 'k3=v3'], 'HostConfig': {'PortBindings'\
+    assert ComposeProject._join_create_options(valid_settings) == (
+        """{'Env': ['k1=v1', 'k2=v2', 'k3=v3'], 'HostConfig': {'PortBindings'\
 : {'43/udp': [{'HostPort': '43'}], '42/tcp': \
-[{'HostPort': '42'}]}}}"""
+[{'HostPort': '42'}]}}}""")
 
     valid_settings_unsorted = json.loads('''{
         "createOptions01": ": {'PortBindings': {'43/udp': [{'HostPort': '4",
         "createOptions02": "3'}], '42/tcp': [{'HostPort': '42'}]}}}",
         "createOptions": "{'Env': ['k1=v1', 'k2=v2', 'k3=v3'], 'HostConfig'"
         }''')
-    assert ComposeProject._join_create_options(valid_settings_unsorted) == """{'Env': ['k1=v1', 'k2=v2', 'k3=v3'], 'HostConfig': {'PortBindings'\
+    assert ComposeProject._join_create_options(valid_settings_unsorted) == (
+        """{'Env': ['k1=v1', 'k2=v2', 'k3=v3'], 'HostConfig': {'PortBindings'\
 : {'43/udp': [{'HostPort': '43'}], '42/tcp': \
-[{'HostPort': '42'}]}}}"""
+[{'HostPort': '42'}]}}}""")
 
     valid_settings_full = json.loads('''{
         "createOptions": "{'Env': ['k1=v1', 'k2=v2', 'k3=v3'], 'HostConfig'",
@@ -399,9 +401,10 @@ def test_join_create_options():
         "createOptions06": "}",
         "createOptions07": "}"
     }''')
-    assert ComposeProject._join_create_options(valid_settings_full) == """{'Env': ['k1=v1', 'k2=v2', 'k3=v3'], 'HostConfig': {'PortBindings'\
+    assert ComposeProject._join_create_options(valid_settings_full) == (
+        """{'Env': ['k1=v1', 'k2=v2', 'k3=v3'], 'HostConfig': {'PortBindings'\
 : {'43/udp': [{'HostPort': '43'}], '42/tcp': \
-[{'HostPort': '42'}]}}}"""
+[{'HostPort': '42'}]}}}""")
 
     invalid_settings_1 = json.loads('''{
         "createOptions": "{'Env': ['k1=v1', 'k2=v2', 'k3=v3'], 'HostConfig'",
