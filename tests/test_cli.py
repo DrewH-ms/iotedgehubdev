@@ -371,19 +371,19 @@ def test_cli_create_options_for_custom_volume(runner):
 
         if get_docker_os_type() == 'linux':
             expected_volumes = (['testVolume', 'edgemoduledev', 'edgehubdev'])
-            expected_tempsensor_volumes = (['"Source": "testVolume"',
-                                            '"Target": "/mnt_test"',
-                                            '"Source": "edgemoduledev"',
-                                            '"Target": "/mnt/edgemodule"'])
-            expected_edgehubdev_volumes = (['"Source": "edgehubdev"', '"Target": "/mnt/edgehub"'])
+            expected_tempsensor_volumes = (['"Name": "testVolume"',
+                                            '"Destination": "/mnt_test"',
+                                            '"Name": "edgemoduledev"',
+                                            '"Destination": "/mnt/edgemodule"'])
+            expected_edgehubdev_volumes = (['"Name": "edgehubdev"', '"Destination": "/mnt/edgehub"'])
         elif get_docker_os_type() == 'windows':
             expected_volumes = (['testvolume', 'edgemoduledev', 'edgehubdev'])
-            expected_tempsensor_volumes = (['"Source": "testVolume"',
-                                            '"Target": "C:/mnt_test"',
-                                            '"Source": "edgemoduledev"',
-                                            '"Target": "c:/mnt/edgemodule"'])
-            expected_edgehubdev_volumes = (['"Source": "edgehubdev"',
-                                            '"Target": "c:/mnt/edgehub"'])
+            expected_tempsensor_volumes = (['"Name": "testVolume"',
+                                            '"Destination": "C:/mnt_test"',
+                                            '"Name": "edgemoduledev"',
+                                            '"Destination": "c:/mnt/edgemodule"'])
+            expected_edgehubdev_volumes = (['"Name": "edgehubdev"',
+                                            '"Destination": "c:/mnt/edgehub"'])
 
         wait_verify_docker_output(['docker', 'volume', 'ls'], expected_volumes)
         wait_verify_docker_output(['docker', 'inspect', 'tempSensor'], expected_tempsensor_volumes)
