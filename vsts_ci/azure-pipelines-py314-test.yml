@@ -52,6 +52,41 @@ jobs:
           TOXENV: "py314"
       maxParallel: 1
     steps:
+      # DIAGNOSTIC PROBE (temporary): determine whether this hosted windows-2022
+      # agent can be put into Linux-container mode. In 2022 the equivalent agent
+      # ran the Linux int-test image via LCOW (Linux Containers on Windows), which
+      # Microsoft has since removed. This step reports the daemon OSType, whether a
+      # Docker Desktop switch tool (DockerCli.exe) is even present, attempts the
+      # switch if it is, and tries to pull+run a tiny Linux image. Read the log:
+      #   - final OSType 'linux' AND the alpine run succeeds  -> Option B is feasible
+      #   - OSType stays 'windows' / no DockerCli.exe / pull fails -> Option B is NOT
+      #     feasible on this agent; use Option A (skip test_create on Windows daemon)
+      - powershell: |
+          $ErrorActionPreference = 'Continue'
+          Write-Host '=== docker version ==='
+          docker version
+          Write-Host '=== initial daemon OSType ==='
+          $before = (docker info --format '{{.OSType}}') 2>&1
+          Write-Host "OSType(before) = $before"
+          Write-Host '=== look for Docker Desktop switch tool (DockerCli.exe) ==='
+          $cli = Join-Path $env:ProgramFiles 'Docker\Docker\DockerCli.exe'
+          if (Test-Path $cli) {
+            Write-Host "Found: $cli -- attempting -SwitchLinuxEngine"
+            & $cli -SwitchLinuxEngine
+            Start-Sleep -Seconds 10
+          } else {
+            Write-Host "NOT FOUND: $cli  (hosted agents run Docker EE/moby, no Desktop switch tool)"
+          }
+          Write-Host '=== daemon OSType after switch attempt ==='
+          $after = (docker info --format '{{.OSType}}') 2>&1
+          Write-Host "OSType(after) = $after"
+          Write-Host '=== try to pull+run a tiny Linux image ==='
+          docker pull alpine:3.19
+          docker run --rm alpine:3.19 uname -a
+          Write-Host "=== PROBE SUMMARY: OSType(before)=$before OSType(after)=$after ==="
+        displayName: "PROBE: can this Windows agent run Linux containers?"
+        continueOnError: true
+
       - template: win32/continuous-build-win32.yml
 
   - job: MacOS
