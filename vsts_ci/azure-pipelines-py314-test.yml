@@ -40,6 +40,23 @@ jobs:
           TOXENV: "py314"
       maxParallel: 1
     steps:
+      # DIAG (Brian's ask): capture the agent's Docker engine + the Python docker
+      # SDK the tests resolve, so we can compare green(Linux) vs red(Windows) and
+      # what the test needs vs what the agent provides. Read-only; never fails the job.
+      - bash: |
+          set +e
+          echo '=== docker version (client + server) ==='
+          docker version
+          echo '=== docker info (key fields) ==='
+          docker info --format 'OSType={{.OSType}} ServerVersion={{.ServerVersion}} Isolation={{.Isolation}} Experimental={{.ExperimentalBuild}}'
+          echo '=== docker SDK pin in requirements.txt ==='
+          grep -i '^docker' requirements.txt
+          echo '=== resolved Python docker SDK version ==='
+          python -m pip install --quiet --disable-pip-version-check 'docker>=7.1.0'
+          python -c "import docker; print('resolved docker SDK =', docker.__version__)"
+        displayName: "DIAG: docker engine + Python SDK versions"
+        continueOnError: true
+
       - template: linux/continuous-build-linux.yml
 
   - job: Windows
@@ -52,6 +69,23 @@ jobs:
           TOXENV: "py314"
       maxParallel: 1
     steps:
+      # DIAG (Brian's ask): capture the agent's Docker engine + the Python docker
+      # SDK the tests resolve, so we can compare against the Linux leg and see what
+      # the test needs vs what the agent provides. Read-only; never fails the job.
+      - powershell: |
+          $ErrorActionPreference = 'Continue'
+          Write-Host '=== docker version (client + server) ==='
+          docker version
+          Write-Host '=== docker info (key fields) ==='
+          docker info --format 'OSType={{.OSType}} ServerVersion={{.ServerVersion}} Isolation={{.Isolation}} Experimental={{.ExperimentalBuild}}'
+          Write-Host '=== docker SDK pin in requirements.txt ==='
+          Select-String -Path requirements.txt -Pattern '^docker'
+          Write-Host '=== resolved Python docker SDK version ==='
+          python -m pip install --quiet --disable-pip-version-check 'docker>=7.1.0'
+          python -c "import docker; print('resolved docker SDK =', docker.__version__)"
+        displayName: "DIAG: docker engine + Python SDK versions"
+        continueOnError: true
+
       # DIAGNOSTIC PROBE (temporary): determine whether this hosted windows-2022
       # agent can be put into Linux-container mode. In 2022 the equivalent agent
       # ran the Linux int-test image via LCOW (Linux Containers on Windows), which
