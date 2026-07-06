@@ -123,7 +123,7 @@ def cli_start_with_deployment(runner, deployment_json_file_path):
 def invoke_module_method():
     invoke_module_method_cmd = 'az iot hub invoke-module-method --device-id "' + device_id + \
         '" --method-name "reset" --module-id "tempSensor" --hub-name "' + \
-        iothub_name + '" --login "' + VALID_IOTHUBCONNECTIONSTRING + '"'
+        iothub_name + '" --auth-type login'
     output = start_process(invoke_module_method_cmd, True)
     if '"status": 200' not in str(output):
         raise Exception('Failed to invoke module method.')
@@ -131,7 +131,7 @@ def invoke_module_method():
 
 def monitor_d2c_message():
     invoke_monitor_events_cmd = 'az iot hub monitor-events -n "' + iothub_name + \
-        '" -d "' + device_id + '" --login "' + VALID_IOTHUBCONNECTIONSTRING + '" -y -t 5'
+        '" -d "' + device_id + '" --auth-type login -y -t 5'
     output = start_process(invoke_monitor_events_cmd, True)
     return output
 

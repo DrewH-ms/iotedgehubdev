@@ -40,7 +40,10 @@ jobs:
           TOXENV: "py314"
       maxParallel: 1
     steps:
+      # Pass the ARM service connection (set pipeline var `azureServiceConnection` in Edit -> Variables, kept out of source) so the template wraps the test run in AzureCLI@2 for AAD login; unset = SAS fallback.
       - template: linux/continuous-build-linux.yml
+        parameters:
+          azureServiceConnection: "$(azureServiceConnection)"
 
   - job: Windows
     pool:
