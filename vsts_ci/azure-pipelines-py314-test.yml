@@ -69,6 +69,40 @@ jobs:
           TOXENV: "py314"
       maxParallel: 1
     steps:
+      # GUARD: hosted windows-2022 VMs occasionally boot with the Docker Windows
+      # service NOT started (named pipe \\.\pipe\docker_engine absent). When that
+      # happens the whole pytest session aborts at COLLECTION, because
+      # tests/test_cli.py instantiates EdgeDockerClient() at import scope. This
+      # step starts the daemon and waits for it to respond so a cold daemon either
+      # self-heals or fails here with a clear message instead of a cryptic
+      # "Could not connect to Docker daemon" collection error.
+      - powershell: |
+          $ErrorActionPreference = 'Continue'
+          Write-Host '=== ensure Docker service is running ==='
+          $svc = Get-Service docker -ErrorAction SilentlyContinue
+          if ($null -eq $svc) {
+            Write-Host 'Docker service "docker" not found via Get-Service.'
+          } else {
+            Write-Host "Docker service status = $($svc.Status)"
+            if ($svc.Status -ne 'Running') {
+              Write-Host 'Starting Docker service...'
+              Start-Service docker
+            }
+          }
+          Write-Host '=== wait for Docker daemon to respond (up to 3 min) ==='
+          $ok = $false
+          $deadline = (Get-Date).AddMinutes(3)
+          while (-not $ok -and (Get-Date) -lt $deadline) {
+            docker info --format '{{.OSType}}' 2>$null | Out-Null
+            if ($LASTEXITCODE -eq 0) { $ok = $true } else { Start-Sleep -Seconds 5 }
+          }
+          Write-Host "docker daemon reachable = $ok"
+          if (-not $ok) {
+            Write-Error 'Docker daemon did not become reachable; failing early so the cause is unambiguous.'
+            exit 1
+          }
+        displayName: "GUARD: ensure Docker daemon is running"
+
       # DIAG (Brian's ask): capture the agent's Docker engine + the Python docker
       # SDK the tests resolve, so we can compare against the Linux leg and see what
       # the test needs vs what the agent provides. Read-only; never fails the job.
