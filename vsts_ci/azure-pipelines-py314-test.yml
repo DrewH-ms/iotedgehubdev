@@ -88,10 +88,11 @@ jobs:
 
       # DIAGNOSTIC PROBE (temporary): determine whether this hosted windows-2022
       # agent can be put into Linux-container mode. In 2022 the equivalent agent
-      # ran the Linux int-test image via LCOW (Linux Containers on Windows), which
-      # Microsoft has since removed. This step reports the daemon OSType, whether a
-      # Docker Desktop switch tool (DockerCli.exe) is even present, attempts the
-      # switch if it is, and tries to pull+run a tiny Linux image. Read the log:
+      # was somehow able to run the Linux int-test image; the mechanism was never
+      # captured in the old logs, so this probe checks the current agent directly.
+      # This step reports the daemon OSType, whether a Docker Desktop switch tool
+      # (DockerCli.exe) is even present, attempts the switch if it is, and tries to
+      # pull+run a tiny Linux image. Read the log:
       #   - final OSType 'linux' AND the alpine run succeeds  -> Option B is feasible
       #   - OSType stays 'windows' / no DockerCli.exe / pull fails -> Option B is NOT
       #     feasible on this agent; use Option A (skip test_create on Windows daemon)
